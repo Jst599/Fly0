@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+images/detect/
+*.log
+.env
+.venv/
+models/
+*.pt
+*.pth
+*.safetensors
