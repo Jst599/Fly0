@@ -110,59 +110,105 @@ Flight direction explanation:
 
 ### Prerequisites
 
-- Python 3.9 or higher
-- AirSim simulator (Unreal Engine 4)
+- Windows 11 Pro (tested: 10.0.22631)
+- Python 3.8.7, 64-bit (currently verified interpreter)
+- AirSim Python client 1.8.1
+- Unreal Engine 4.27.2 with an AirSim Multirotor scene
+- Ollama 0.33.2
+- NVIDIA GPU with at least 8 GB VRAM recommended (tested: RTX 4060 Laptop GPU, 8188 MiB)
 - Git
 
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://gitee.com/brikit/fly0.git
-cd fly0
+git clone https://github.com/Jst599/Fly0.git
+cd Fly0
 ```
-
-**Note for users in China**: Please use the Gitee link above for faster and more stable access.
 
 ### Step 2: Create Virtual Environment (Recommended)
 
 ```bash
-# Using conda
-conda create -n fly0 python=3.9
-conda activate fly0
+# Using venv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
 ### Step 3: Install Dependencies
 
 ```bash
-pip install -r env/requirements.txt
+python -m pip install -r env/requirements.txt
 ```
 
 **Note**: Due to AirSim's special dependency relationships, please install AirSim separately at the end:
 
 ```bash
-pip install airsim==1.8.1 --no-build-isolation
+python -m pip install airsim==1.8.1 --no-build-isolation
 ```
 
 ### Step 4: Install AirSim
 
 Follow the official [AirSim installation guide](https://microsoft.github.io/AirSim/build/windows/) to install AirSim on your system.
 
+The AirSim Python client and the UE4 simulator are separate components. The
+Python client must be installed into the same interpreter that runs Fly0.
+
+### Step 5: Install and prepare Ollama
+
+Install Ollama, start its local service, and download the tested model:
+
+```powershell
+ollama serve
+ollama pull qwen3-vl:4b
+ollama list
+```
+
+The tested service endpoint is `http://127.0.0.1:11434` and the tested model
+is `qwen3-vl:4b` (approximately 3.3 GB). The model must be available before
+starting Fly0.
+
 ## Quick Start
 
 ### 1. Start AirSim
 
-Launch your AirSim environment, **please use the `src/airsim/settings.json` provided in this project to replace the settings.json in your AirSim installation directory**, ensuring LiDAR and camera sensors are configured.
+Launch the UE4 AirSim environment. Use the `src/airsim/settings.json` provided
+in this repository as the AirSim settings file so that camera 0 and
+`LidarSensor1` are configured. AirSim RPC must be available at
+`127.0.0.1:41451`.
 
 ### 2. Configure the System
 
-Edit `config.json` with your API keys and preferred VLM provider.
+The tested configuration is in `src/airsim/config.json`:
+
+```json
+{
+  "API_TYPE": "ollama",
+  "OLLAMA_MODEL": "qwen3-vl:4b",
+  "OLLAMA_CTRL_MODEL": "qwen3-vl:4b",
+  "vision": {"enabled": true},
+  "planner": {"lidar_sensors": ["LidarSensor1"]}
+}
+```
+
+If you use another model or provider, update this file and record the change
+in your experiment log.
 
 ### 3. Run the System
 
 ```bash
 cd src/airsim
-python ./main.py
+..\..\.venv\Scripts\Activate.ps1
+python .\main.py
 ```
+
+On Windows, `run.bat` is also available. It uses `FLY0_PYTHON` when set,
+otherwise a project `.venv` or a Python executable on `PATH`:
+
+```powershell
+$env:FLY0_PYTHON = "C:\path\to\python.exe"
+.\src\airsim\run.bat
+```
+
+The selected interpreter must be able to import AirSim and the dependencies.
 
 ### 4. Issue Commands
 
