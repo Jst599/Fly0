@@ -47,17 +47,36 @@ if errorlevel 1 (
 )
 echo [Fly0] AirSim RPC is ready.
 
-if exist "I:\fly0_py38\Scripts\python.exe" (
-    set "PYTHON_EXE=I:\fly0_py38\Scripts\python.exe"
+set "PYTHON_EXE="
+if defined FLY0_PYTHON (
+    if exist "%FLY0_PYTHON%" (
+        set "PYTHON_EXE=%FLY0_PYTHON%"
+    ) else (
+        echo [Fly0][ERROR] FLY0_PYTHON does not exist: %FLY0_PYTHON%
+        echo [Fly0] Set FLY0_PYTHON to the full path of python.exe.
+        pause
+        exit /b 10
+    )
+) else if exist "%PROJECT_ROOT%\.venv\Scripts\python.exe" (
+    set "PYTHON_EXE=%PROJECT_ROOT%\.venv\Scripts\python.exe"
 ) else (
     for /f "delims=" %%P in ('where python 2^>nul') do if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
 )
 if not defined PYTHON_EXE (
     echo [Fly0][ERROR] Python was not found.
+    echo [Fly0] Create .venv, add Python to PATH, or set FLY0_PYTHON.
     pause
     exit /b 10
 )
 echo [Fly0] Python: %PYTHON_EXE%
+"%PYTHON_EXE%" -c "import airsim, numpy, scipy, cv2, requests" >nul 2>nul
+if errorlevel 1 (
+    echo [Fly0][ERROR] Required Python packages are missing from:
+    echo [Fly0] %PYTHON_EXE%
+    echo [Fly0] Install env\requirements.txt and airsim into this interpreter.
+    pause
+    exit /b 13
+)
 echo [Fly0] Starting Fly0. Press Ctrl+C to stop.
 "%PYTHON_EXE%" -u main.py --config config.json --prompt sysprompt\sysprompt.txt
 set "FLY0_EXIT=%ERRORLEVEL%"
